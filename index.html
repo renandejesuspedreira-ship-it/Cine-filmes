@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cine Filme - Seu Catálogo de Filmes</title>
+  <style>
+    :root {
+      --bg-color: #0f0f13;
+      --card-bg: #1a1a24;
+      --accent: #e50914;
+      --accent-hover: #b80710;
+      --text-main: #f5f5f7;
+      --text-muted: #a0a0b0;
+      --border-color: #2a2a3a;
+      --gold: #ffc107;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background-color: rgba(15, 15, 19, 0.95);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+    }
+
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .logo span {
+      color: #fff;
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .search-bar, .filter-select {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      outline: none;
+      font-size: 0.9rem;
+    }
+
+    .search-bar:focus, .filter-select:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-add {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.2s;
+    }
+
+    .btn-add:hover {
+      background-color: var(--accent-hover);
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      flex: 1;
+      width: 100%;
+    }
+
+    .movie-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .movie-card {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .movie-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    }
+
+    .poster-container {
+      width: 100%;
+      height: 310px;
+      background-color: #121218;
+      position: relative;
+    }
+
+    .poster-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .movie-info {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      justify-content: space-between;
+    }
+
+    .movie-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .movie-meta {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .rating {
+      color: var(--gold);
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .btn-delete {
+      background: rgba(229, 9, 20, 0.2);
+      color: #ff4d4d;
+      border: 1px solid rgba(229, 9, 20, 0.3);
+      padding: 0.4rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      width: 100%;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .btn-delete:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .empty-state {
+      text-align: center;
+      grid-column: 1 / -1;
+      padding: 4rem 1rem;
+      color: var(--text-muted);
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      width: 90%;
+      max-width: 450px;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.2rem;
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .btn-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      background: #121218;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.7rem;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.8rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+
+    .btn-submit:hover {
+      background: var(--accent-hover);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-container">
+      <div class="logo">🎬 Cine <span>Filme</span></div>
+      <div class="controls">
+        <input type="text" id="searchInput" class="search-bar" placeholder="Buscar por título..." />
+        <select id="filterGenre" class="filter-select">
+          <option value="todos">Todos os Gêneros</option>
+          <option value="Ação">Ação</option>
+          <option value="Comédia">Comédia</option>
+          <option value="Drama">Drama</option>
+          <option value="Ficção Científica">Ficção Científica</option>
+          <option value="Terror">Terror</option>
+          <option value="Romance">Romance</option>
+          <option value="Animação">Animação</option>
+        </select>
+        <button class="btn-add" id="openModalBtn">
+          <span>+</span> Adicionar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="movie-grid" id="movieGrid"></div>
+  </main>
+
+  <!-- Modal Cadastrar Filme -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Novo Filme</h2>
+        <button class="btn-close" id="closeModalBtn">&times;</button>
+      </div>
+      <form id="movieForm">
+        <div class="form-group">
+          <label for="title">Título do Filme *</label>
+          <input type="text" id="title" required placeholder="Ex: Interestelar" />
+        </div>
+        <div class="form-group">
+          <label for="genre">Gênero *</label>
+          <select id="genre" required>
+            <option value="">Selecione...</option>
+            <option value="Ação">Ação</option>
+            <option value="Comédia">Comédia</option>
+            <option value="Drama">Drama</option>
+            <option value="Ficção Científica">Ficção Científica</option>
+            <option value="Terror">Terror</option>
+            <option value="Romance">Romance</option>
+            <option value="Animação">Animação</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="year">Ano de Lançamento</label>
+          <input type="number" id="year" placeholder="Ex: 2014" min="1900" max="2099" />
+        </div>
+        <div class="form-group">
+          <label for="rating">Avaliação (1 a 5)</label>
+          <input type="number" id="rating" min="1" max="5" step="0.1" placeholder="Ex: 4.8" />
+        </div>
+        <div class="form-group">
+          <label for="poster">URL do Poster (Imagem)</label>
+          <input type="url" id="poster" placeholder="https://link-da-imagem.jpg" />
+        </div>
+        <button type="submit" class="btn-submit">Salvar Filme</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Inicialização do Array de Filmes (salvo no LocalStorage)
+    let movies = JSON.parse(localStorage.getItem('cineFilmeData')) || [
+      {
+        id: '1',
+        title: 'Interestelar',
+        genre: 'Ficção Científica',
+        year: '2014',
+        rating: '4.9',
+        poster: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&q=80'
+      },
+      {
+        id: '2',
+        title: 'Batman: O Cavaleiro das Trevas',
+        genre: 'Ação',
+        year: '2008',
+        rating: '5.0',
+        poster: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&q=80'
+      }
+    ];
+
+    // Elementos DOM
+    const movieGrid = document.getElementById('movieGrid');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const openModalBtn = document.getElementById('openModalBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const movieForm = document.getElementById('movieForm');
+    const searchInput = document.getElementById('searchInput');
+    const filterGenre = document.getElementById('filterGenre');
+
+    // Funções de Renderização
+    function renderMovies() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const selectedGenre = filterGenre.value;
+
+      const filtered = movies.filter(movie => {
+        const matchesSearch = movie.title.toLowerCase().includes(searchTerm);
+        const matchesGenre = selectedGenre === 'todos' || movie.genre === selectedGenre;
+        return matchesSearch && matchesGenre;
+      });
+
+      if (filtered.length === 0) {
+        movieGrid.innerHTML = `
+          <div class="empty-state">
+            <h3>Nenhum filme encontrado</h3>
+            <p>Adicione novos filmes ou altere seus filtros de busca.</p>
+          </div>
+        `;
+        return;
+      }
+
+      movieGrid.innerHTML = filtered.map(movie => `
+        <div class="movie-card">
+          <div class="poster-container">
+            <img src="${movie.poster || 'https://via.placeholder.com/300x450?text=Sem+Capa'}" 
+                 alt="${movie.title}" 
+                 onerror="this.src='https://via.placeholder.com/300x450?text=Sem+Capa'" />
+          </div>
+          <div class="movie-info">
+            <div>
+              <h3 class="movie-title">${movie.title}</h3>
+              <div class="movie-meta">
+                <span>${movie.genre} ${movie.year ? '• ' + movie.year : ''}</span>
+                <span class="rating">★ ${movie.rating || 'N/A'}</span>
+              </div>
+            </div>
+            <button class="btn-delete" onclick="deleteMovie('${movie.id}')">Excluir</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Salvar Dados
+    function saveData() {
+      localStorage.setItem('cineFilmeData', JSON.stringify(movies));
+      renderMovies();
+    }
+
+    // Adicionar Filme
+    movieForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const newMovie = {
+        id: Date.now().toString(),
+        title: document.getElementById('title').value,
+        genre: document.getElementById('genre').value,
+        year: document.getElementById('year').value,
+        rating: document.getElementById('rating').value,
+        poster: document.getElementById('poster').value
+      };
+
+      movies.unshift(newMovie);
+      saveData();
+      movieForm.reset();
+      toggleModal(false);
+    });
+
+    // Deletar Filme
+    window.deleteMovie = function(id) {
+      if (confirm('Tem certeza que deseja remover este filme?')) {
+        movies = movies.filter(movie => movie.id !== id);
+        saveData();
+      }
+    };
+
+    // Controlar Modal
+    function toggleModal(show) {
+      modalOverlay.classList.toggle('active', show);
+    }
+
+    openModalBtn.addEventListener('click', () => toggleModal(true));
+    closeModalBtn.addEventListener('click', () => toggleModal(false));
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) toggleModal(false);
+    });
+
+    // Eventos de Busca e Filtro
+    searchInput.addEventListener('input', renderMovies);
+    filterGenre.addEventListener('change', renderMovies);
+
+    // Inicialização
+    renderMovies();
+  </script>
+</body>
+</html>
